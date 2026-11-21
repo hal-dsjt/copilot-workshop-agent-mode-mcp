@@ -6,6 +6,7 @@ const list = document.querySelector("#todo-list");
 const emptyMessage = document.querySelector("#empty-message");
 const count = document.querySelector("#todo-count");
 const storageStatus = document.querySelector("#storage-status");
+const clearCompletedButton = document.querySelector("#clear-completed");
 
 let storage = getAvailableStorage();
 let todos = loadTodos();
@@ -168,6 +169,7 @@ function renderTodos() {
   emptyMessage.hidden = todos.length > 0;
   const incompleteCount = todos.filter((todo) => !todo.completed).length;
   count.textContent = `未完成:${incompleteCount} 項`;
+  clearCompletedButton.disabled = todos.every((todo) => !todo.completed);
 }
 
 form.addEventListener("submit", (event) => {
@@ -217,6 +219,20 @@ list.addEventListener("click", (event) => {
 
   const item = deleteButton.closest(".todo-item");
   todos = todos.filter((todo) => todo.id !== item.dataset.id);
+  saveTodos();
+  renderTodos();
+});
+
+clearCompletedButton.addEventListener("click", () => {
+  const completedCount = todos.filter((todo) => todo.completed).length;
+  if (
+    completedCount === 0 ||
+    !window.confirm(`確定要清除 ${completedCount} 筆已完成的待辦事項嗎？`)
+  ) {
+    return;
+  }
+
+  todos = todos.filter((todo) => !todo.completed);
   saveTodos();
   renderTodos();
 });
