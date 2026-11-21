@@ -6,9 +6,13 @@ const list = document.querySelector("#todo-list");
 const emptyMessage = document.querySelector("#empty-message");
 const count = document.querySelector("#todo-count");
 const storageStatus = document.querySelector("#storage-status");
+const filterGroup = document.querySelector("#filter-group");
+const filterButtons = [...filterGroup.querySelectorAll("[data-filter]")];
+const filterFeedback = document.querySelector("#filter-feedback");
 
 let storage = getAvailableStorage();
 let todos = loadTodos();
+let activeFilter = "all";
 
 // 優先使用 localStorage；部分瀏覽器限制直接開啟本機檔案時，改用可跨重新整理保留的 sessionStorage。
 function getAvailableStorage() {
@@ -161,13 +165,46 @@ function createTodoElement(todo) {
 }
 
 function renderTodos() {
+  const visibleTodos = todos.filter((todo) => {
+    if (activeFilter === "active") {
+      return !todo.completed;
+    }
+    if (activeFilter === "completed") {
+      return todo.completed;
+    }
+    return true;
+  });
   const fragment = document.createDocumentFragment();
-  todos.forEach((todo) => fragment.append(createTodoElement(todo)));
+  visibleTodos.forEach((todo) => fragment.append(createTodoElement(todo)));
   list.replaceChildren(fragment);
 
-  emptyMessage.hidden = todos.length > 0;
+  const hasTodos = todos.length > 0;
+  const emptyMessages = {
+    all: "還沒有任何待辦事項,新增一個吧!",
+    active: "目前沒有未完成的事項；已完成事項仍保留，可切換到「已完成」查看。",
+    completed: "目前沒有已完成的事項；未完成事項仍保留，可切換到「未完成」查看。",
+  };
+  emptyMessage.textContent = hasTodos
+    ? emptyMessages[activeFilter]
+    : "還沒有任何待辦事項,新增一個吧!";
+  emptyMessage.hidden = visibleTodos.length > 0;
+
   const incompleteCount = todos.filter((todo) => !todo.completed).length;
   count.textContent = `未完成:${incompleteCount} 項`;
+
+  filterButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.filter === activeFilter));
+  });
+}
+
+function showFilterFeedback(message) {
+  filterFeedback.textContent = message;
+  filterFeedback.hidden = false;
+}
+
+function clearFilterFeedback() {
+  filterFeedback.textContent = "";
+  filterFeedback.hidden = true;
 }
 
 form.addEventListener("submit", (event) => {
@@ -205,6 +242,17 @@ list.addEventListener("change", (event) => {
   }
 
   todo.completed = checkbox.checked;
+  if (activeFilter === "completed" && !todo.completed) {
+    showFilterFeedback(
+      "這筆事項已移至「未完成」，資料沒有被刪除；可切換到「全部」查看。",
+    );
+  } else if (activeFilter === "active" && todo.completed) {
+    showFilterFeedback(
+      "這筆事項已移至「已完成」，資料沒有被刪除；可切換到「全部」查看。",
+    );
+  } else {
+    clearFilterFeedback();
+  }
   saveTodos();
   renderTodos();
 });
@@ -218,6 +266,17 @@ list.addEventListener("click", (event) => {
   const item = deleteButton.closest(".todo-item");
   todos = todos.filter((todo) => todo.id !== item.dataset.id);
   saveTodos();
+  renderTodos();
+});
+
+filterGroup.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-filter]");
+  if (!button) {
+    return;
+  }
+
+  activeFilter = button.dataset.filter;
+  clearFilterFeedback();
   renderTodos();
 });
 

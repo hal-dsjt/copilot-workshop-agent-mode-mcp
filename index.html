@@ -30,13 +30,19 @@
           >
           <button type="submit">新增</button>
         </div>
+        <div id="filter-group" class="filter-group" role="group" aria-label="篩選待辦事項">
+          <button type="button" data-filter="all" aria-pressed="true">全部</button>
+          <button type="button" data-filter="active" aria-pressed="false">未完成</button>
+          <button type="button" data-filter="completed" aria-pressed="false">已完成</button>
+        </div>
         <p id="storage-status" class="storage-status" role="status" aria-live="polite"></p>
       </form>
 
       <section class="list-section" aria-labelledby="list-title">
         <h2 id="list-title" class="visually-hidden">待辦事項清單</h2>
+        <p id="filter-feedback" class="filter-feedback" role="status" aria-live="polite" hidden></p>
         <ul id="todo-list" class="todo-list"></ul>
-        <p id="empty-message" class="empty-message">還沒有任何待辦事項,新增一個吧!</p>
+        <p id="empty-message" class="empty-message" role="status">還沒有任何待辦事項,新增一個吧!</p>
       </section>
 
       <footer class="app-footer">
